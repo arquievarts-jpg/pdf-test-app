@@ -195,8 +195,20 @@ def make_questions(sentences: List[str], *, level: str, num_questions: int, opti
             used.add(i)
             continue
 
-        # Selección de respuesta (palabra contenida en la oración)
-        words_sorted = sorted(words, key=lambda w: (-len(w), random.random()))
+        # Selección de respuesta usando palabra menos frecuente en el corpus
+        # Calculamos frecuencia global de palabras
+        if "word_freq" not in st.session_state:
+            freq = {}
+            for sen in sentences:
+                for w in word_tokenize(sen):
+                    wl = w.lower()
+                    if valid_candidate_word(wl):
+                        freq[wl] = freq.get(wl, 0) + 1
+            st.session_state["word_freq"] = freq
+        freq = st.session_state["word_freq"]
+
+        # palabra candidata menos frecuente
+        words_sorted = sorted(words, key=lambda w: (freq.get(w.lower(), 1_000_000), random.random()))
         answer = words_sorted[0]
 
         if level == "Básico":
@@ -300,10 +312,7 @@ def export_test_payload(meta: Dict, questions: List[Dict]) -> str:
 
 def import_test_payload(file) -> Tuple[Dict, List[Dict]]:
     data = json.load(file)
-    meta = data.get("meta", {})
-    questions = data.get("questions", [])
-    return meta, questions
-
+    return data.get("meta", {}), data.get("questions", [])
 
 
 def add_result_to_history(score: int, total: int, mode: str):
@@ -374,19 +383,9 @@ if uploaded_test is not None:
         st.session_state.selected = {}
         st.session_state.show_feedback = {}
         st.session_state.show_explain = {}
-
-        # Restaurar ajustes desde meta
-        if meta:
-            st.session_state.level = meta.get("level", None)
-            st.session_state.num_q = meta.get("num_q", None)
-            st.session_state.num_opts = meta.get("num_opts", None)
-            st.session_state.seed = meta.get("seed", None)
-            st.session_state.max_pages = meta.get("max_pages", None)
-
-        st.success("✅ Test cargado y ajustes restaurados.")
+        st.success("Test cargado desde JSON.")
     except Exception as e:
         st.error(f"No he podido cargar el test: {e}")
-
 
 # Si hay PDF subido, (re)generar test cuando toque
 if uploaded_pdf and ("questions" not in st.session_state or regen or start_exam):
