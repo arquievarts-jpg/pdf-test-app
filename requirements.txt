@@ -2,9 +2,8 @@ streamlit>=1.37,<2
 PyPDF2>=3.0.0
 scikit-learn>=1.3
 nltk>=3.8
-
-# Opcional (solo si quieres explicaciones con IA):
+pymupdf>=1.23
+# Opcional (explicaciones con IA)
 openai>=1.30
-
-# Opcional (mejora la recarga automática en macOS):
+# Opcional (mejor recarga en macOS local)
 watchdog>=4.0
