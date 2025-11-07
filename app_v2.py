@@ -300,7 +300,10 @@ def export_test_payload(meta: Dict, questions: List[Dict]) -> str:
 
 def import_test_payload(file) -> Tuple[Dict, List[Dict]]:
     data = json.load(file)
-    return data.get("meta", {}), data.get("questions", [])
+    meta = data.get("meta", {})
+    questions = data.get("questions", [])
+    return meta, questions
+
 
 
 def add_result_to_history(score: int, total: int, mode: str):
@@ -371,9 +374,19 @@ if uploaded_test is not None:
         st.session_state.selected = {}
         st.session_state.show_feedback = {}
         st.session_state.show_explain = {}
-        st.success("Test cargado desde JSON.")
+
+        # Restaurar ajustes desde meta
+        if meta:
+            st.session_state.level = meta.get("level", None)
+            st.session_state.num_q = meta.get("num_q", None)
+            st.session_state.num_opts = meta.get("num_opts", None)
+            st.session_state.seed = meta.get("seed", None)
+            st.session_state.max_pages = meta.get("max_pages", None)
+
+        st.success("✅ Test cargado y ajustes restaurados.")
     except Exception as e:
         st.error(f"No he podido cargar el test: {e}")
+
 
 # Si hay PDF subido, (re)generar test cuando toque
 if uploaded_pdf and ("questions" not in st.session_state or regen or start_exam):
